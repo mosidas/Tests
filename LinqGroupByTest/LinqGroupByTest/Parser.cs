@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,10 +12,10 @@ namespace LinqGroupByTest
     {
         public InputCsv ReadCsv(string inputFilePath)
         {
-            List<string[]> rows = new();
-            string[] header = null;
+            Dictionary<string, Dictionary<string, List<string[]>>> data = new();
+            string[]? header = null;
 
-            using (var parser = new TextFieldParser(inputFilePath, Encoding.GetEncoding("Shift_JIS")))
+            using (var parser = new TextFieldParser(inputFilePath, Encoding.UTF8))
             {
                 //  区切りの指定
                 parser.TextFieldType = FieldType.Delimited;
@@ -27,6 +28,15 @@ namespace LinqGroupByTest
                 int rowCount = 0;
                 // ファイルの終端までループ
 
+                var group1Keys = new HashSet<string>();
+                group1Keys.Add("Job");
+                
+                var group2Keys = new HashSet<string>();
+                group2Keys.Add("Age");
+
+                var group1 = new HashSet<int>();
+                var group2 = new HashSet<int>();
+
                 while (!parser.EndOfData)
                 {
                     var row = parser.ReadFields();
@@ -34,35 +44,56 @@ namespace LinqGroupByTest
                     if (rowCount == 0)
                     {
                         header = row;
+                        group1 = header.Select((p, i) => new { Content = p, Index = i }).Where(h => group1Keys.Contains(h.Content)).Select(s => s.Index).ToHashSet();
+                        group2 = header.Select((p, i) => new { Content = p, Index = i }).Where(h => group2Keys.Contains(h.Content)).Select(s => s.Index).ToHashSet();
                     }
                     else
                     {
-                        rows.Add(row);
+
+                        var val1 = row.Select((p, i) => new { Content = p, Index = i }).Where(h => group1.Contains(h.Index)).Select(s => s.Content);
+                        var key1 = string.Join("_", val1);
+
+                        var val2 = row.Select((p, i) => new { Content = p, Index = i }).Where(h => group2.Contains(h.Index)).Select(s => s.Content);
+                        var key2 = string.Join("_", val2);
+
+                        if (data.ContainsKey(key1))
+                        {
+                            if (data[key1].ContainsKey(key2))
+                            {
+                                data[key1][key2].Add(row); 
+                            }
+                            else
+                            {
+                                data[key1][key2] = new List<string[]> { row };
+                            } 
+                        }
+                        else
+                        {
+                            data[key1] = new Dictionary<string, List<string[]>>();
+                            data[key1][key2] = new List<string[]> { row };
+                        }
+                       
                     }
                     rowCount++;
                 }
             }
 
-            var ret = new InputCsv(header, rows);
+            var ret = new InputCsv(header, data);
             return ret;
         }
 
-        public void OutputReport(string path)
+        public void OutputReport(InputCsv input)
         {
-            var input = ReadCsv(path);
-
-            var group1Keys = new Dictionary<string, string>();
-            var group2Keys = new Dictionary<string, string>();
-
-            var group1 = input.Header
-                .Select((p, i) => new { Content = p, Index = i })
-                .Where(h => group1Keys.ContainsKey(h.Content));
-
-            var group2 = input.Header
-                .Select((p, i) => new { Content = p, Index = i })
-                .Where(h => group2Keys.ContainsKey(h.Content));
-
-            var inputGroup = input.Data.GroupBy(i => new { Data = i.Select((content, index) => new { Content = content, Index = index }).Where(x => sheetGroup.Any(y => y.Index == x.Index)) });
+            foreach (var val in input.Data.Keys)
+            {
+                foreach (var d in input.Data[val].Keys)
+                {
+                    foreach(var row in input.Data[val][d])
+                    {
+                        Debug.WriteLine($"key1:{val} key2:{d} value:{string.Join(",", row)}");
+                    }
+                }
+            }
         }
     }
 }

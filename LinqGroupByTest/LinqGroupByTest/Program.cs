@@ -4,7 +4,10 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            var p = new Parser();
+            var ret = p.ReadCsv("D:\\repository\\Tests\\LinqGroupByTest\\LinqGroupByTest\\sample.csv");
+            p.OutputReport(ret);
+            Console.ReadLine();
         }
     }
 }

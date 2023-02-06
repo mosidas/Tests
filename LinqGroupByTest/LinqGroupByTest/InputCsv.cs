@@ -10,9 +10,9 @@ namespace LinqGroupByTest
     internal class InputCsv
     {
         public IEnumerable<string> Header { get; set; }
-        public IEnumerable<IEnumerable<string>> Data { get; set; }
+        public Dictionary<string, Dictionary<string, List<string[]>>> Data { get; set; }
 
-        public InputCsv(string[] header, List<string[]> data) 
+        public InputCsv(IEnumerable<string> header, Dictionary<string, Dictionary<string, List<string[]>>> data) 
         {
             Header = header;
             Data = data;
