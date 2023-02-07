@@ -1,0 +1,15 @@
+{
+  "name": [
+    "aaa",
+    "bbb",
+    "ccc"
+  ],
+  "setA": {
+    "subA-1": "valA1",
+    "subA-2": "valA2"
+  },
+  "setB": {
+    "subB-1": "valB1",
+    "subB-2": "valB2"
+  }
+}
